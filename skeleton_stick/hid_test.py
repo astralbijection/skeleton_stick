@@ -1,6 +1,6 @@
 """Tests for HID utilities."""
 import pytest
-from .convert import char_to_report
+from .hid import char_to_report
 
 
 @pytest.mark.parametrize(
