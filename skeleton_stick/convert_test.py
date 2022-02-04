@@ -1,5 +1,7 @@
+"""Tests for HID utilities."""
 import pytest
 from .convert import char_to_report
+
 
 @pytest.mark.parametrize(
     "test_input,expected",
@@ -16,4 +18,5 @@ from .convert import char_to_report
     ]
 )
 def test_char_to_report(test_input, expected):
+    """The char to report converter should be correct."""
     assert char_to_report(test_input) == expected
