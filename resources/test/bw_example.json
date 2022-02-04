@@ -1,0 +1,175 @@
+[
+  {
+    "object": "item",
+    "id": "a6435039-c04f-4575-ba4f-adb001722d53",
+    "organizationId": null,
+    "folderId": null,
+    "type": 1,
+    "reprompt": 0,
+    "name": "astrid@banana",
+    "notes": null,
+    "favorite": false,
+    "login": {
+      "uris": [
+        {
+          "match": 1,
+          "uri": "banana.id.astrid.tech"
+        },
+        {
+          "match": null,
+          "uri": "skeletonstick.astrid.tech"
+        }
+      ],
+      "username": "astrid",
+      "password": "first test password",
+      "totp": null,
+      "passwordRevisionDate": "2021-12-17T00:42:44.335Z"
+    },
+    "collectionIds": [],
+    "revisionDate": "2022-02-04T21:20:55.520Z",
+    "passwordHistory": [
+      {
+        "lastUsedDate": "2021-12-17T00:42:44.335Z",
+        "password": "another test password"
+      },
+      {
+        "lastUsedDate": "2021-12-17T00:29:53.052Z",
+        "password": "salkdfjlkasfdjk"
+      },
+      {
+        "lastUsedDate": "2021-11-21T07:19:16.188Z",
+        "password": "asjlkdghghj"
+      }
+    ]
+  },
+  {
+    "object": "item",
+    "id": "f7aef56b-3063-4aca-a363-ae0a004cf31f",
+    "organizationId": null,
+    "folderId": null,
+    "type": 1,
+    "reprompt": 0,
+    "name": "banana windows partition",
+    "notes": null,
+    "favorite": false,
+    "login": {
+      "uris": [
+        {
+          "match": null,
+          "uri": "skeletonstick.astrid.tech"
+        }
+      ],
+      "username": "Astrid",
+      "password": "kjaslfkdghlasfgjksfghsfd",
+      "totp": null,
+      "passwordRevisionDate": null
+    },
+    "collectionIds": [],
+    "revisionDate": "2022-02-04T21:21:08.300Z"
+  },
+  {
+    "object": "item",
+    "id": "018beafa-2508-4e12-841f-adb201447d7c",
+    "organizationId": null,
+    "folderId": null,
+    "type": 1,
+    "reprompt": 0,
+    "name": "SSH Key: astrid@banana",
+    "notes": null,
+    "favorite": false,
+    "login": {
+      "uris": [
+        {
+          "match": 1,
+          "uri": "banana.id.astrid.tech"
+        },
+        {
+          "match": null,
+          "uri": "skeletonstick.astrid.tech"
+        }
+      ],
+      "username": null,
+      "password": "dafkasdhgsafhdgfdh",
+      "totp": null,
+      "passwordRevisionDate": null
+    },
+    "collectionIds": [],
+    "revisionDate": "2022-02-04T21:20:48.236Z"
+  },
+  {
+    "object": "item",
+    "id": "010aa806-25ec-4e0d-b040-ae0001681a8c",
+    "organizationId": null,
+    "folderId": null,
+    "type": 1,
+    "reprompt": 0,
+    "name": "ZFS: BANANA:bigdisk/enc",
+    "notes": "Prompted on boot.",
+    "favorite": false,
+    "fields": [
+      {
+        "name": "SkeletonStick",
+        "value": "true",
+        "type": 2,
+        "linkedId": null
+      }
+    ],
+    "login": {
+      "uris": [
+        {
+          "match": null,
+          "uri": "banana.id.astrid.tech"
+        },
+        {
+          "match": null,
+          "uri": "skeletonstick.astrid.tech"
+        }
+      ],
+      "username": null,
+      "password": "lskjdfghlskfdjhsdfigesyurgiehg",
+      "totp": null,
+      "passwordRevisionDate": "2021-12-17T05:37:03.682Z"
+    },
+    "collectionIds": [],
+    "revisionDate": "2022-02-04T21:05:56.543Z",
+    "passwordHistory": [
+      {
+        "lastUsedDate": "2021-12-17T05:37:03.682Z",
+        "password": "salkjgsufoidghsfdbsdfbjsdj"
+      },
+      {
+        "lastUsedDate": "2021-12-17T00:39:18.276Z",
+        "password": "fiusadfyhasoiguefouiusdfjhgf"
+      }
+    ]
+  },
+  {
+    "object": "item",
+    "id": "7c0c10f2-cd08-4976-a815-adb100a2d072",
+    "organizationId": null,
+    "folderId": null,
+    "type": 1,
+    "reprompt": 0,
+    "name": "ZFS: cracktop-pc:rpool/local/home",
+    "notes": null,
+    "favorite": false,
+    "login": {
+      "uris": [
+        {
+          "match": 1,
+          "uri": "zfs://cracktop-pc.id.astrid.tech/rpool/local/home"
+        },
+        {
+          "match": null,
+          "uri": "skeletonstick.astrid.tech"
+        }
+      ],
+      "username": null,
+      "password": "ddfiusydfgiuosfdghsdfoigujsfhdguoisfd",
+      "totp": null,
+      "passwordRevisionDate": null
+    },
+    "collectionIds": [],
+    "revisionDate": "2022-02-04T21:19:49.743Z"
+  }
+]

@@ -8,12 +8,14 @@ of a block device.
 import json
 from hashlib import pbkdf2_hmac
 from io import BytesIO
+from pathlib import Path
 from struct import Struct
-from typing import List, NamedTuple
+from typing import Callable, List, NamedTuple, Optional
 
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
 from Crypto.Util.Padding import pad, unpad
+
 
 FILE_START = b'__SKELETONSTICK\n'
 """The symbols to detect the file starting."""
@@ -66,17 +68,29 @@ def save(file: BytesIO, passphrase: str, passwords: List[PasswordEntry]):
     file.write(ciphertext)
 
 
-def load(file: BytesIO, passphrase: str):
+def make_loader(path: Path) -> Callable[[str], Optional[PasswordEntry]]:
+    """Curried version of load."""
+    def verify(key: str):
+        with path.open('rb') as file:
+            try:
+                return load(file, key)
+            except Exception:
+                print('foo')
+                return None
+    return verify
+
+
+def load(file: BytesIO, passphrase: str) -> PasswordEntry:
     """
     Securely loads password data from the given file.
     """
     start = file.read(len(FILE_START))
     if start != FILE_START:
-        raise Exception("Bad file start")
+        raise ValueError("Bad file start")
 
     version, = VERSION_FMT.unpack(file.read(VERSION_FMT.size))
     if version > CURRENT_VERSION:
-        raise Exception("Unsupported version")
+        raise ValueError("Unsupported version")
 
     salt, mac_tag, nonce, ciphertext_length = HEADER_FMT.unpack(
         file.read(HEADER_FMT.size))
@@ -84,7 +98,13 @@ def load(file: BytesIO, passphrase: str):
 
     key = kdf(passphrase, salt)
     cipher = AES.new(key, AES.MODE_EAX, nonce=nonce, mac_len=16)
-    plaintext = unpad(cipher.decrypt_and_verify(ciphertext, mac_tag), 32)
+
+    try:
+        decrypted = cipher.decrypt_and_verify(ciphertext, mac_tag)
+    except ValueError as e:
+        raise ValueError("Wrong password provided") from e
+
+    plaintext = unpad(decrypted, 32)
     return deserialize(plaintext)
 
 

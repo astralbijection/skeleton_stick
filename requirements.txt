@@ -1,2 +1,4 @@
-pytest
+click
+curses-menu
 pycryptodome
+pytest
