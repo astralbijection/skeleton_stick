@@ -1,8 +1,11 @@
 import json
 import os
 from pathlib import Path
+from signal import pause
 import sys
+from time import sleep
 import click
+from skeleton_stick.pitft_kb import PiTFTDriver
 
 from skeleton_stick.tui import start_tui
 
@@ -20,6 +23,13 @@ def tui(password_file):
     """Run the TUI with the given password file."""
     start_tui(Path(password_file))
 
+
+@cli.command()
+def keyboard():
+    """Run the keyboard driver daemon."""
+    driver = PiTFTDriver()
+    pause()
+    driver.close()
 
 @cli.command()
 def pw_import():

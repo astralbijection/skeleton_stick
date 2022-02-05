@@ -1,4 +1,6 @@
 click
 curses-menu
+gpiozero
+keyboard
 pycryptodome
 pytest
