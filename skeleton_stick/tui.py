@@ -44,30 +44,30 @@ def password_prompt(verify: Callable[[str], Optional[R]]) -> Optional[R]:
         while True:
             render()
 
-            match stdscr.getch():
-                case curses.ERR:
-                    continue
-                case curses.KEY_LEFT:
-                    pw.append('L')
-                case curses.KEY_RIGHT:
-                    pw.append('R')
-                case curses.KEY_UP:
-                    pw.append('U')
-                case curses.KEY_DOWN:
-                    pw.append('D')
-                case curses.KEY_BACKSPACE:
-                    if len(pw) > 0:
-                        pw.pop()
-                    else:
-                        return None
-                case 10:
-                    status = "Verifying..."
-                    render()
-                    result = verify(''.join(pw))
-                    if result:
-                        return result
+            ch = stdscr.getch()
+            if ch == curses.ERR:
+                continue
+            elif ch == curses.KEY_LEFT:
+                pw.append('L')
+            elif ch == curses.KEY_RIGHT:
+                pw.append('R')
+            elif ch == curses.KEY_UP:
+                pw.append('U')
+            elif ch == curses.KEY_DOWN:
+                pw.append('D')
+            elif ch == curses.KEY_BACKSPACE:
+                if len(pw) > 0:
+                    pw.pop()
+                else:
+                    return None
+            elif ch == 10:
+                status = "Verifying..."
+                render()
+                result = verify(''.join(pw))
+                if result:
+                    return result
 
-                    status = "Invalid password"
+                status = "Invalid password"
 
     return curses.wrapper(loop)
 
