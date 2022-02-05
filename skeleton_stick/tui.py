@@ -1,9 +1,11 @@
 import curses
+import os
 from pathlib import Path
 from typing import Callable, List, Optional, TypeVar
 
 from cursesmenu import CursesMenu
 from cursesmenu.items import FunctionItem
+from skeleton_stick.hid import write_keyboard
 
 from skeleton_stick.storage import PasswordEntry, make_loader
 
@@ -13,12 +15,19 @@ SPINNER = "/-\\|"
 def start_tui(password_file: Path):
     """Start the TUI."""
 
+    device_path = Path(os.environ.get("HID_GADGET", "/dev/hidg0"))
+
+    def use_password(entry: PasswordEntry) -> None:
+        """The callback for when passwords are used."""
+        with device_path.open('wb') as file:
+            write_keyboard(file, entry.password)
+
     while True:
         entries = password_prompt(verify=make_loader(password_file))
         if not entries:
             continue
 
-        password_browser(entries, use_password=lambda x: print(x.password))
+        password_browser(entries, use_password=use_password)
 
 
 R = TypeVar('R')

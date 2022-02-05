@@ -9,10 +9,21 @@ from time import sleep
 RELEASE = b'\0' * 8
 """HID report to release keys."""
 
-_UNSHIFT = "abcdefghijklmnopqrstuvwxyz1234567890" + " -=[]\\" + ";'`,./"
-_SHIFT = "ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()" + " _+{}|" + ':"~<>?'
-_ids = list(range(0x04, 0x28)) + list(range(0x2c, 0x32)) + \
+_UNSHIFT = (
+    "abcdefghijklmnopqrstuvwxyz1234567890"
+    " -=[]\\"
+    ";'`,./"
+)
+_SHIFT = (
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()"
+    " _+{}|"
+    ':"~<>?'
+)
+_ids = (
+    list(range(0x04, 0x28)) +
+    list(range(0x2c, 0x32)) +
     list(range(0x33, 0x39))
+)
 _char_to_report = {
     **{
         # b0 - modifiers, left-shift = 0x02
@@ -41,6 +52,7 @@ An weird report that I'll figure out later.
 It does some HID magic to initialize the keyboard it seems.
 """
 
+
 def setup_hid(path: Path, udc: str):
     """
     Sets up the HID device at the specified path under
@@ -49,33 +61,37 @@ def setup_hid(path: Path, udc: str):
     See https://randomnerdtutorials.com/raspberry-pi-zero-usb-keyboard-hid/
     for what I ripped off.
     """
+    path.mkdir(parents=True, exist_ok=True)
     (path / "idVendor").write_text('0x1d6b')  # Linux Foundation
     (path / "idProduct").write_text('0x0104')  # Multifunction Composite Gadget
     (path / "bcdDevice").write_text('0x0100')  # v1.0.0
     (path / "bcdUSB").write_text('0x0200')  # USB2
 
     strings = path / "strings" / "0x409"
-    strings.mkdir()
+    strings.mkdir(parents=True, exist_ok=True)
     (strings / "serialnumber").write_text("cafebabe")
     (strings / "manufacturer").write_text("Astrid A. M. Yu")
     (strings / "product").write_text("Skeleton Stick")
-  
+
     configs = path / "configs" / "c.1"
     configs_subdir = configs / "strings" / "0x409"
-    configs_subdir.mkdir()
+    configs_subdir.mkdir(parents=True, exist_ok=True)
     (configs_subdir / "configuration").write_text("Config 1: ECM network")
-    (configs / "maxPower").write_text("250")
+    (configs / "MaxPower").write_text("250")
 
-    functions = path / "hid.usb0"
+    functions = path / "functions" / "hid.usb0"
+    functions.mkdir(parents=True, exist_ok=True)
     (functions / "protocol").write_text("1")
     (functions / "subclass").write_text("1")
     (functions / "report_length").write_text("8")
     (functions / "report_desc").write_bytes(REPORT_DESC)
 
+    (configs / "hid.usb0").symlink_to(functions)
+
     (path / "UDC").write_text(udc)
 
 
-def write_keyboard(file: BytesIO, text: str, delay: float = 0.01) -> bytes:
+def write_keyboard(file: BytesIO, text: str, delay: float = 0.01) -> None:
     """Given a file, writes the given text to the file as keyboard reports."""
     for char in text:
         file.write(char_to_report(char))

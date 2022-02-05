@@ -3,8 +3,8 @@ import os
 from pathlib import Path
 from signal import pause
 import sys
-from time import sleep
 import click
+from skeleton_stick.hid import setup_hid
 from skeleton_stick.pitft_kb import PiTFTDriver
 
 from skeleton_stick.tui import start_tui
@@ -30,6 +30,19 @@ def keyboard():
     driver = PiTFTDriver()
     pause()
     driver.close()
+
+
+@cli.command()
+def setup_gadget():
+    """Set up the USB keyboard gadget."""
+    udc_path = next(Path('/sys/class/udc').iterdir())
+    udc = udc_path.name
+    print("UDC:", udc)
+    setup_hid(
+        Path('/sys/kernel/config/usb_gadget/skeleton_stick'),
+        udc=udc
+    )
+
 
 @cli.command()
 def pw_import():
