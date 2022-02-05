@@ -74,8 +74,7 @@ def make_loader(path: Path) -> Callable[[str], Optional[PasswordEntry]]:
         with path.open('rb') as file:
             try:
                 return load(file, key)
-            except Exception:
-                print('foo')
+            except ValueError:
                 return None
     return verify
 
@@ -101,8 +100,8 @@ def load(file: BytesIO, passphrase: str) -> PasswordEntry:
 
     try:
         decrypted = cipher.decrypt_and_verify(ciphertext, mac_tag)
-    except ValueError as e:
-        raise ValueError("Wrong password provided") from e
+    except ValueError as ex:
+        raise ValueError("Wrong password provided") from ex
 
     plaintext = unpad(decrypted, 32)
     return deserialize(plaintext)
