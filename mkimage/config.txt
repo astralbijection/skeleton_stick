@@ -1,0 +1,11 @@
+# For more options and information see
+# http://rpf.io/configtxt
+# Some settings may impact device functionality. See link above for details
+
+# Enable DWC2
+modules-load=dwc2,g_serial
+dtoverlay=dwc2
+
+# Disable HDMI
+hdmi_blanking=1
+hdmi_force_hotplug=0
