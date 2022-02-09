@@ -1,4 +1,4 @@
 from . import storage
 from . import hid
-from . import tui
-from . cli import cli
+from . import oled
+from .cli import cli

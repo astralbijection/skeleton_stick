@@ -116,58 +116,59 @@ def password_prompt(btns: HATButtons, device: sh1106, verify: Callable[[str], Op
     Gets a password from the user.
     """
 
-    pw: List[str] = []
+    buf: List[str] = []
     status: Optional[str] = None
     result: Optional[R] = None
 
     @btns.when_activated(Key.LEFT)
     def on_left():
-        pw.append('L')
+        buf.append('L')
         render()
 
     @btns.when_activated(Key.RIGHT)
     def on_right():
-        pw.append('R')
+        buf.append('R')
         render()
 
     @btns.when_activated(Key.UP)
     def on_up():
-        pw.append('U')
+        buf.append('U')
         render()
 
     @btns.when_activated(Key.DOWN)
     def on_down():
-        pw.append('D')
+        buf.append('D')
         render()
 
     @btns.when_activated(Key.CENTER)
     def on_center():
-        pw.append('C')
+        buf.append('C')
         render()
 
     @btns.when_activated(Key.K1)
     def on_backspace():
-        if len(pw) > 0:
-            pw.pop()  # Backspace
+        if len(buf) > 0:
+            buf.pop()  # Backspace
             render()
 
     @btns.when_activated(Key.K2)
     def on_extra():
-        pw.append('X')
+        nonlocal buf
+        buf = []  # Clear
         render()
 
     @btns.when_activated(Key.K3)
-    def on_k3():
+    def on_verify():
         nonlocal result, status
         status = "Verifying..."
         render()
-        result = verify(''.join(pw))
+        result = verify(''.join(buf))
         status = 'Success!' if result else 'Wrong password'
 
     def render():
         with canvas(device) as draw:
             draw.text((0, 0), 'Decrypt', fill='white')
-            draw.text((0, 10), "*" * len(pw), fill='white')
+            draw.text((0, 10), "*" * len(buf), fill='white')
             if status:
                 draw.text((0, 30), status, fill='white')
 
@@ -207,7 +208,7 @@ def password_browser(btns: HATButtons, device: sh1106, entries: List[PasswordEnt
         sending = False
         render()
 
-    @btns.when_activated(Key.K2)
+    @btns.when_activated(Key.K1)
     def on_exit():
         nonlocal done
         done = True
