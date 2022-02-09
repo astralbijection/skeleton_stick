@@ -1,0 +1,10 @@
+[Unit]
+Requires=udc-keyboard.service
+After=udc-keyboard.service
+Description=Skeleton Stick Password Manager
+
+[Service]
+ExecStart=/usr/bin/python3 -m skeleton_stick oled /boot/passwords.skst
+
+[Install]
+WantedBy=local-fs.target

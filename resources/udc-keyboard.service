@@ -1,0 +1,11 @@
+[Unit]
+Description=UDC Keyboard Gadget
+Requires=local-fs.target
+After=local-fs.target
+
+[Service]
+ExecStart=/usr/bin/python3 -m skeleton_stick setup-gadget
+Type=oneshot
+
+[Install]
+WantedBy=local-fs.target

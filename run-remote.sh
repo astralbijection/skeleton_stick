@@ -23,6 +23,6 @@ cd $dir
 tar x  # extract tar from stdin
 "
 
-git ls-files skeleton_stick requirements.txt resources | tar c --files-from=- | ssh $ssh_target "$script"
+git ls-files skeleton_stick requirements.txt resources setup.py | tar c --files-from=- | ssh $ssh_target "$script"
 
 ssh -t $ssh_target "cd $dir && sudo python3 -m skeleton_stick $@"
