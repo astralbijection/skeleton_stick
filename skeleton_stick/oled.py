@@ -4,6 +4,7 @@ An OLED interface for the pi.
 https://www.waveshare.com/1.3inch-oled-hat.htm
 """
 
+from xmlrpc.client import Boolean
 from spidev import SpiDev
 import os
 from enum import IntEnum
@@ -21,9 +22,8 @@ from skeleton_stick.hid import write_keyboard
 from skeleton_stick.storage import PasswordEntry, make_loader
 
 
-
-RST_PIN  = 25 
-DC_PIN   = 24
+RST_PIN = 25
+DC_PIN = 24
 
 
 class Key(IntEnum):
@@ -48,10 +48,10 @@ class HATButtons:
             k: Button(k, pull_up=True)
             for k in Key
         }
-    
+
     def __enter__(self):
         return self
-    
+
     def __exit__(self, _, value, traceback):
         self.close()
 
@@ -90,20 +90,22 @@ def start_oled(password_file: Path):
         """The callback for when passwords are used."""
         with device_path.open('wb') as file:
             write_keyboard(file, entry.password)
-    
-    serial = spi(device=0, port=0, bus_speed_hz=8000000, transfer_size=4096, gpio_DC=DC_PIN, gpio_RST=RST_PIN)  
-    device = sh1106(serial, rotate=2) # sh1106  
+
+    serial = spi(device=0, port=0, bus_speed_hz=8000000,
+                 transfer_size=4096, gpio_DC=DC_PIN, gpio_RST=RST_PIN)
+    device = sh1106(serial, rotate=2)  # sh1106
 
     with HATButtons() as btns:
         while True:
             btns.detach_listeners()
-            entries = password_prompt(btns, device, verify=make_loader(password_file))
+            entries = password_prompt(
+                btns, device, verify=make_loader(password_file))
 
             if not entries:
                 continue
 
             btns.detach_listeners()
-            password_browser(entries, use_password=use_password)
+            password_browser(btns, device, entries, use_password=use_password)
 
 
 R = TypeVar("R")
@@ -121,30 +123,38 @@ def password_prompt(btns: HATButtons, device: sh1106, verify: Callable[[str], Op
     @btns.when_activated(Key.LEFT)
     def on_left():
         pw.append('L')
+        render()
 
     @btns.when_activated(Key.RIGHT)
     def on_right():
         pw.append('R')
+        render()
 
     @btns.when_activated(Key.UP)
     def on_up():
         pw.append('U')
+        render()
 
     @btns.when_activated(Key.DOWN)
     def on_down():
         pw.append('D')
+        render()
 
     @btns.when_activated(Key.CENTER)
     def on_center():
         pw.append('C')
+        render()
 
     @btns.when_activated(Key.K1)
-    def on_k1():
-        pw.append('1')
+    def on_backspace():
+        if len(pw) > 0:
+            pw.pop()  # Backspace
+            render()
 
     @btns.when_activated(Key.K2)
-    def on_k2():
-        pw.pop()  # Backspace
+    def on_extra():
+        pw.append('X')
+        render()
 
     @btns.when_activated(Key.K3)
     def on_k3():
@@ -152,8 +162,7 @@ def password_prompt(btns: HATButtons, device: sh1106, verify: Callable[[str], Op
         status = "Verifying..."
         render()
         result = verify(''.join(pw))
-        if not result:
-            status = 'Wrong password'
+        status = 'Success!' if result else 'Wrong password'
 
     def render():
         with canvas(device) as draw:
@@ -162,8 +171,8 @@ def password_prompt(btns: HATButtons, device: sh1106, verify: Callable[[str], Op
             if status:
                 draw.text((0, 30), status, fill='white')
 
+    render()
     while not result:
-        render()
         sleep(0.5)
 
     return result
@@ -172,33 +181,62 @@ def password_prompt(btns: HATButtons, device: sh1106, verify: Callable[[str], Op
 def password_browser(btns: HATButtons, device: sh1106, entries: List[PasswordEntry], use_password: Callable[[PasswordEntry], None]):
     """Browse passwords and use them."""
 
+    selected_index: int = 0
+    scroll_offset: int = 0
+    sending: bool = False
+    done: bool = False
+
     @btns.when_activated(Key.UP)
     def on_up():
-        pw.append('U')
+        nonlocal selected_index
+        selected_index = (selected_index - 1) % len(entries)
+        render()
 
     @btns.when_activated(Key.DOWN)
     def on_down():
-        pw.append('D')
+        nonlocal selected_index
+        selected_index = (selected_index + 1) % len(entries)
+        render()
 
-    @btns.when_activated(Key.K1)
-    def on_k1():
-        pw.append('1')
+    @btns.when_activated(Key.CENTER)
+    def on_center():
+        nonlocal sending
+        sending = True
+        render()
+        use_password(entries[selected_index])
+        sending = False
+        render()
 
     @btns.when_activated(Key.K2)
-    def on_k2():
-        pw.append('2')
-
-    @btns.when_activated(Key.K3)
-    def on_k3():
-        verify(''.join(pw))
+    def on_exit():
+        nonlocal done
+        done = True
 
     def render():
+        nonlocal sending, selected_index, scroll_offset
+        rows = 6
+        row_height = 10
+
+        # Move scroll offset until selected index is visible
+        scroll_offset = min(
+            max(scroll_offset, selected_index - rows - 1),
+            selected_index)
+
         with canvas(device) as draw:
-            draw.text(0, 0, 'Enter your password using the arrows')
-            draw.text(1, 0, "*" * len(pw))
-            if status:
-                draw.text(2, 0, status)
+            for i in range(rows):
+                entry_i = scroll_offset + i
+                if entry_i >= len(entries):
+                    break  # no more entries to draw
+
+                entry = entries[entry_i]
+                if i == selected_index:
+                    selector = '*' if sending else '>'
+                else:
+                    selector = ' '
+                draw.text((0, row_height * i), selector + entry.name, fill='white')
+
+    render()
 
     while not done:
-        render()
-        sleep(1)
+        sleep(0.5)
+

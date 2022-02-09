@@ -43,7 +43,11 @@ def keyboard():
 @cli.command()
 def setup_gadget():
     """Set up the USB keyboard gadget."""
-    udc_path = next(Path('/sys/class/udc').iterdir())
+    try:
+        udc_path = next(Path('/sys/class/udc').iterdir())
+    except FileNotFoundError:
+        print("Couldn't find files in /sys/class/udc. Did you enable dwc2?")
+        sys.exit(1)
     udc = udc_path.name
     print("UDC:", udc)
     setup_hid(
