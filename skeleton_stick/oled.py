@@ -18,7 +18,7 @@ from luma.core.render import canvas
 from luma.oled.device import sh1106
 
 
-from skeleton_stick.hid import write_keyboard
+from skeleton_stick.hid import get_udc, setup_hid, write_keyboard
 from skeleton_stick.storage import PasswordEntry, make_loader
 
 
@@ -87,7 +87,12 @@ def start_oled(password_file: Path):
     device_path = Path(os.environ.get("HID_GADGET", "/dev/hidg0"))
 
     def use_password(entry: PasswordEntry) -> None:
-        """The callback for when passwords are used."""
+        udc = get_udc()
+        print("UDC:", udc)
+        setup_hid(
+            Path('/sys/kernel/config/usb_gadget/skeleton_stick'),
+            udc=udc
+        )
         with device_path.open('wb') as file:
             write_keyboard(file, entry.password)
 
@@ -185,26 +190,35 @@ def password_browser(btns: HATButtons, device: sh1106, entries: List[PasswordEnt
     selected_index: int = 0
     scroll_offset: int = 0
     sending: bool = False
+    error: bool = False
     done: bool = False
 
     @btns.when_activated(Key.UP)
     def on_up():
-        nonlocal selected_index
+        nonlocal error, selected_index
         selected_index = (selected_index - 1) % len(entries)
+        error = False
         render()
 
     @btns.when_activated(Key.DOWN)
     def on_down():
-        nonlocal selected_index
+        nonlocal error, selected_index
         selected_index = (selected_index + 1) % len(entries)
+        error = False
         render()
 
+    @btns.when_activated(Key.K3)
     @btns.when_activated(Key.CENTER)
     def on_center():
-        nonlocal sending
+        nonlocal error, sending
         sending = True
+        error = False
         render()
-        use_password(entries[selected_index])
+        try:
+            use_password(entries[selected_index])
+        except Exception as err:
+            print(err)
+            error = True
         sending = False
         render()
 
@@ -231,7 +245,12 @@ def password_browser(btns: HATButtons, device: sh1106, entries: List[PasswordEnt
 
                 entry = entries[entry_i]
                 if i == selected_index:
-                    selector = '*' if sending else '>'
+                    if sending:
+                        selector = '*'
+                    elif error:
+                        selector = '!'
+                    else:
+                        selector = '>'
                 else:
                     selector = ' '
                 draw.text((0, row_height * i), selector + entry.name, fill='white')
@@ -240,4 +259,3 @@ def password_browser(btns: HATButtons, device: sh1106, entries: List[PasswordEnt
 
     while not done:
         sleep(0.5)
-

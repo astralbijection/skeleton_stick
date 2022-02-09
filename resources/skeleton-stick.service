@@ -1,6 +1,6 @@
 [Unit]
-Requires=udc-keyboard.service
-After=udc-keyboard.service
+Requires=local-fs.target
+After=local-fs.target
 Description=Skeleton Stick Password Manager
 
 [Service]

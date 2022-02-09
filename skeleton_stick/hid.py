@@ -5,6 +5,7 @@ Utilities for converting from characters to HID reports.
 from io import BytesIO
 from pathlib import Path
 from time import sleep
+from typing import Optional
 
 RELEASE = b'\0' * 8
 """HID report to release keys."""
@@ -53,7 +54,18 @@ It does some HID magic to initialize the keyboard it seems.
 """
 
 
-def setup_hid(path: Path, udc: str):
+def get_udc() -> Optional[str]:
+    """Returns the UDC value."""
+    try:
+        udc_path = next(Path('/sys/class/udc').iterdir())
+    except FileNotFoundError:
+        return None
+    except StopIteration:
+        return None
+    return udc_path.name
+
+
+def setup_hid(path: Path, udc: str, ignore_busy: bool = True):
     """
     Sets up the HID device at the specified path under
     /sys/kernel/config/usb_gadget.
@@ -70,7 +82,7 @@ def setup_hid(path: Path, udc: str):
     strings = path / "strings" / "0x409"
     strings.mkdir(parents=True, exist_ok=True)
     (strings / "serialnumber").write_text("cafebabe")
-    (strings / "manufacturer").write_text("Astrid A. M. Yu")
+    (strings / "manufacturer").write_text("Astrid Yu")
     (strings / "product").write_text("Skeleton Stick")
 
     configs = path / "configs" / "c.1"
@@ -88,7 +100,11 @@ def setup_hid(path: Path, udc: str):
 
     (configs / "hid.usb0").symlink_to(functions)
 
-    (path / "UDC").write_text(udc)
+    try:
+        (path / "UDC").write_text(udc)
+    except OSError as err:
+        if not (ignore_busy and err.errno == 16):
+            raise
 
 
 def write_keyboard(file: BytesIO, text: str, delay: float = 0.01) -> None:

@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 import sys
 import click
-from skeleton_stick.hid import setup_hid
+from skeleton_stick.hid import get_udc, setup_hid
 from skeleton_stick.oled import start_oled
 
 from .storage import PasswordEntry, save
@@ -24,12 +24,7 @@ def oled(password_file):
 @cli.command()
 def setup_gadget():
     """Set up the USB keyboard gadget."""
-    try:
-        udc_path = next(Path('/sys/class/udc').iterdir())
-    except FileNotFoundError:
-        print("Couldn't find files in /sys/class/udc. Did you enable dwc2?")
-        sys.exit(1)
-    udc = udc_path.name
+    udc = get_udc()
     print("UDC:", udc)
     setup_hid(
         Path('/sys/kernel/config/usb_gadget/skeleton_stick'),
