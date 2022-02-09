@@ -5,6 +5,7 @@ from signal import pause
 import sys
 import click
 from skeleton_stick.hid import setup_hid
+from skeleton_stick.oled import start_oled
 from skeleton_stick.pitft_kb import PiTFTDriver
 
 from skeleton_stick.tui import start_tui
@@ -22,6 +23,13 @@ def cli():
 def tui(password_file):
     """Run the TUI with the given password file."""
     start_tui(Path(password_file))
+
+
+@cli.command()
+@click.argument("password_file")
+def oled(password_file):
+    """Run the OLED interface with the given password file."""
+    start_oled(Path(password_file))
 
 
 @cli.command()
