@@ -1,0 +1,141 @@
+\documentclass{article}
+
+\usepackage{CJKutf8}
+\usepackage{pdflscape}
+\usepackage{hyperref}
+
+\title{Skeleton Stick -- A Hardware Password Manager}
+\author{Astrid Yu}
+\date{March 11, 2022}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\section{Introduction}
+
+Using password managers like Bitwarden, 1Password, and LastPass is a recommended security practice for several reasons. They ensure that different passwords are used for different services, so a breach of one service does mean all passwords are cracked. Additionally, they make it very easy to use those passwords through a variety of frontends: desktop apps, mobile apps, browser extensions, and CLI tools, among other things.
+
+However, not all passwords are convenient to enter, especially if you don't have access to one of those password manager frontends. Here are some examples of where this might happen:
+
+\begin{itemize}
+    \item The logon screen to get into your user account likely won't have a password manager.
+    \item If you have a PGP key, it's inconvenient to copy that key from your password manager.
+    \item If your entire system uses disk encryption, there's definitely no password manager access at boot time.
+    \item In a school or corporate environment, if you want to use an arbitrary computer that does not have the password manager installed, you will need to manually enter in your password every time you log in.
+\end{itemize}
+
+It gets worse if you follow the idea of ``one unique strong passphrase for every service,'' since those passphrases will likely be very long, perhaps on the order of 30 characters, and the amount to remember may be multiplied across however many personal computers you have as well.
+
+For these scenarios, it's completely possible to pull out your smartphone and reference the password in the mobile app. However, that is slow and inconvenient, and potentially vulnerable to attackers who are standing behind you while you are entering the password in.
+
+Skeleton Stick aims to fill in this gap in password manager coverage. It emulates a USB keyboard, so it's compatible with basically every computer, and even mobile devices if you have the right OTG cable!
+
+\section{Usage}
+
+\section{Design}
+
+\section{Vulnerabilities and mitigations}
+
+In general, all of the potential attacks on Skeleton Stick will require physical access, or control over the computers it's used on. When it's not under debugging, the Wi-Fi and Bluetooth chips will be disabled or removed completely (i.e. by using a Pi Zero instead of a Pi Zero W), so wireless access to the device is not possible.
+
+As such, a simple mitigation to almost all possible attacks would be to simply ensure physical custody of the device at all times. The Skeleton Stick should be treated like a physical key to your house, because it is. However, if that fails, there are other mitigations that can be taken.
+
+\subsection{Keylogger attacks}
+
+The Skeleton Stick does not prevent passwords from being stolen via keyloggers. The user would have to make sure that they aren't plugging the Skeleton Stick into a hardware keylogger between them and the computer, and that the computer they are plugging the Skeleton Stick into does not have a software keylogger, either.
+
+\paragraph{Hardware keyloggers} Usually, USB hardware keyloggers can be slipped between a keyboard and the computer on a public terminal. However, because the user is \textit{physically} plugging the device into a USB port, they would likely either detect that USB keylogger or simply plug it into a different port. However, there is still risk from an attacker planting a hardware keylogger \textit{inside} the computer, perhaps between the USB port and the motherboard headers.
+
+\paragraph{Software keyloggers} The Skeleton Stick would likely exhibit similar characteristics as if the user were to transcribe passwords from their phone app onto the keyboard. The software keylogger would be able to catch any passwords that the Skeleton Stick is sending to the computer, but so long as the user isn't using a software password manager on the computer, then only those passwords would be recorded.
+
+Of course, if there \textit{is} a software keylogger, it is likely that the machine is also compromised in other ways, so the user should avoid entering passwords or doing sensitive activities on public computers in the first place.
+
+\subsection{Cold boot attacks}
+
+There is no unencrypted plaintext on disk, but the PIN and the plaintext \textit{does} exist in memory. The Raspberry Pi doesn't have secure hardware memory erasure, so it is vulnerable to a cold boot attack.
+
+\subsubsection{Vulnerable states}
+
+There are a couple of device states that could be vulnerable to a cold-boot attack.
+
+\paragraph{PIN entry/Key derivation} This state refers to any point where the user is entering the PIN, or the hash function is being applied to the PIN. The PIN, or at least parts of it, would certainly be in memory.
+
+A partial PIN would provide a lot of information for an attacker to perform a brute-force attack; a full PIN would allow the attacker to easily steal the passwords, if they get access to the password file (and since this is a physical attack, they most certainly will).
+
+\paragraph{Passwords decrypted} The passwords have been decrypted and the user is selecting a password to enter. Obviously, the passwords would be in RAM at this point.
+
+\paragraph{Passwords re-encrypted} The passwords were decrypted at one point, but the user has since re-encrypted the passwords.
+
+Since the proof of concept program is written in Python, which is a high-level, garbage collected language, there is a chance that the plaintext has not yet been freed, or that it has been freed but not securely erased (i.e. by overwriting with random data or zeroes). Python does not have much in terms of primitive memory manipulation features. Thus, it may be useful to rewrite the program (or at least these more critical parts) in a lower-level language, like C, Assembly, or Rust, that can allow this secure erasure of the data in RAM.
+
+\subsubsection{Performing the attack}
+
+The form factor of the Pi Zero makes it extremely easy to perform a cold boot attack. It could be done as follows:
+
+\begin{enumerate}
+    \item Swipe the Skeleton Stick. This will likely disconnect the power supply, if it's not already disconnected.
+    \item Swap out the SD card for a customized SD card that performs a memory dump.
+    \item Power the Skeleton Stick back on, likely with a portable battery pack.
+\end{enumerate}
+
+However, the attacker would have to strategically select a time to swipe the stick.
+
+\paragraph{While in active use} Suppose the attacker swipes when the user is actively using the device and it is in a vulnerable state. This would yield the highest probability of success by maximizing the chance of RAM remanence.
+
+However, this would be a very noisy attack; likely, the attacker would be swapping out the SD and plugging in the portable battery pack while sprinting away from the user. Still, users should make sure that they have full custody of the stick during the entire time it's plugged in.
+
+\paragraph{Shortly after unplugging} If the user unplugs the device in a vulnerable state, packs it away, and looks away, the attacker may be able to swipe it within seconds or minutes. However, the chance of RAM remanence would be lower, so the attack may be less successful.
+
+\subsubsection{Cold boot mitigations}
+
+
+\subsection{Offline attacks on the password file}
+
+If an attacker gained offline access to the password file (perhaps by stealing the SD card and copying it off the disk), they would have access to the following information:
+
+\begin{itemize}
+    \item The nonce and MAC from EAX mode AES
+    \item Ciphertext of the user's passwords
+    \item Length of the user's passwords
+    \item Key derivation function cost
+\end{itemize}
+
+The most efficient way to break this password file would likely be by going through all possible PINs and running it through the KDF under the known cost. So, the user would have to consider the convenience/security tradeoff when selecting a PIN and a KDF cost.
+
+Since the alphabet is only 5 symbols, each additional symbol will only yield $\log_2(5) = 2.32$ bits of entropy. If the recommended password entropy is $77$ bits, then the PIN would need to be $34$ symbols long! That may be long, but it is potentially memorable.
+
+Besides lengthening the PIN, there are a few other ways to improve its security.
+
+\subsubsection{Mitigation: Key stretching}
+
+Using a larger cost could increase the effective entropy by a constant amount. For example, using a cost that is 3 times higher would increase the effective entropy of all passwords by a constant $\log_2(3) = 1.58$ bits. However, this will also mean that the length of the decryption step (which is already dominated by the key derivation function) takes 3 times longer. It already takes a very long time, since the Pi Zero has such a weak processor, so this can only have a limited benefit before it becomes highly inconvenient.
+
+\subsubsection{Potential Mitigation: Expanding the alphabet}
+
+The PIN entry interface is pretty maximally utilized, so unless we create custom hardware, it's simply not possible to include more buttons. However, we could encode additional information into our button presses, such as by looking at the time domain.
+
+Note that all of these features would require additional code, so they are not actually implemented. However, they are listed here as possible future improvements.
+
+\paragraph{Long/Short Presses} If we record inputted symbols as short presses or long presses, this increases our alphabet by a factor of 2. We could render short as lowercase and long as uppercase. For example, \texttt{short center} would be \texttt{c} and \texttt{long center} would be \texttt{C}.
+
+\paragraph{"Shift" Key} Currently, clear and backspace are on two different buttons. If we merge the clear and backspace into one button (i.e. short for backspace, long for clear), we could free up an additional button to use as a ``shift'' key.
+
+\begin{CJK*}{UTF8}{gbsn}
+When a joystick direction is pressed, the state of the shift key would be recorded with it as well, and the keys would write a different character; instead of \texttt{UDLRC}, it could be \texttt{SXZYQ}. \footnote{In Chinese, 上下左右前, pronounced \textit{shàng xià zuǒ yòu qián}, means ``up, down, left, right, front.'' 中 (zhōng) could not be used because 左 (zuǒ) already occupies \texttt{Z}.}
+\end{CJK*}
+
+For example, \texttt{short up} could be rendered as \texttt{u}, but \texttt{shift + short up} would be rendered as \texttt{s}, and \texttt{shift + long up} would be rendered as \texttt{S}. This would increase our alphabet by a factor of 2.
+
+\paragraph{Space characters} We could even record the time between inputted symbols as short or long pauses to read in "space" characters. For example, if the user inputs something like \texttt{<short up> <long right> <short center>}, waits, then enters \texttt{<shift + long left> <short right>}, this would be rendered as \texttt{uRc Ps}. Though this only increases our alphabet by 1 symbol, since spaces can't be shifted, spaces can make the password more memorable, and make it easier for the user to increase the password length.
+
+\paragraph{Adding it all together} Our full alphabet could go from the 5-symbol \texttt{UDLRC} to the 21-symbol \texttt{uUdDlLrRcCsSxXzZyYqQ} plus a space. This has an entropy of $4.39$ bits, which nearly doubles our per-symbol password entropy by combining all of these techniques! This way, to reach $77$ bits, we only need a $18$ symbol PIN, which is a lot easier to memorize.
+
+However, it must be noted that doing so will make the user interface somewhat more difficult to use. Also, the user might not end up using features such as the shift key. Once again, there is the eternal tradeoff between convenience and security.
+
+\subsection{Attack Tree Summary}
+
+\section{Conclusion}
+
+\end{document}
