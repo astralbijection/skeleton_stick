@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "./skstlib",
+    "./skstctl",
+    "./skstd",
+]

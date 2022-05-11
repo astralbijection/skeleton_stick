@@ -11,9 +11,20 @@
         pkgs = import nixpkgs { inherit system; };
         naersk-lib = pkgs.callPackage naersk { };
       in {
-        defaultPackage = naersk-lib.buildPackage ./.;
+        packages = {
+          skstctl = naersk-lib.buildPackage {
+            src = ./skstctl;
+            root = ./.;
+          };
+          skstd = naersk-lib.buildPackage {
+            src = ./skstd;
+            root = ./.;
+          };
+        };
 
-        defaultApp = utils.lib.mkApp { drv = self.defaultPackage."${system}"; };
+        apps = {
+          skstctl = utils.lib.mkApp { drv = self.defaultPackage."${system}"; };
+        };
 
         devShell = with pkgs;
           mkShell {
