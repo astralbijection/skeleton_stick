@@ -1,5 +1,7 @@
 [workspace]
 
 members = [
-    "skeleton_stick"
+    "skeleton_stick",
+    "cli",
+    "lib",
 ]
