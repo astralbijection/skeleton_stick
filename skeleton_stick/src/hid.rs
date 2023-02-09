@@ -35,17 +35,19 @@ lazy_static! {
     static ref CHAR_TO_REPORT: [[u8; 8] ; 128] = {
         let mut map = [[0u8; 8]; 128];
         for (i, u, s) in izip!(KEY_IDS.into_iter(), UNSHIFT.into_iter(), SHIFT.into_iter()) {
+            // Shifted.
             // b0 - modifiers, left-shift = 0x02
             // b1 - ???
             // b2 - keycode
             // b3:7 - padding to 8 bytes
             map[*s as usize] = [2, 0, i, 0, 0, 0, 0, 0];
 
+            // Unshifted.
             // b0 - modifiers, none = 0x00
             // b1 - ???
             // b2 - keycode
             // b3:7 - padding to 8 bytes
-            map[*u as usize] = [2, 0, i, 0, 0, 0, 0, 0];
+            map[*u as usize] = [0, 0, i, 0, 0, 0, 0, 0];
         }
         map
     };
@@ -139,4 +141,34 @@ pub async fn write_keyboard(
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use test_case::test_case;
+
+    #[test_case('f', *b"\x00\0\x09\0\0\0\0\0"; "f")]
+    #[test_case('/', *b"\x00\0\x38\0\0\0\0\0"; "slash")]
+    #[test_case('\'', *b"\x00\0\x34\0\0\0\0\0"; "backslash")]
+    #[test_case(';', *b"\x00\0\x33\0\0\0\0\0"; "semicolon")]
+    #[test_case('_', *b"\x02\0\x2D\0\0\0\0\0"; "underscore")]
+    #[test_case('*', *b"\x02\0\x25\0\0\0\0\0"; "asterisk")]
+    #[test_case('|', *b"\x02\0\x31\0\0\0\0\0"; "pipe")]
+    #[test_case('P', *b"\x02\0\x13\0\0\0\0\0"; "P")]
+    #[test_case('A', *b"\x02\0\x04\0\0\0\0\0"; "A")]
+    fn test_char_to_report(test_input: char, expected: [u8; 8]) {
+        assert_eq!(char_to_report(test_input), Some(expected));
+    }
+
+    #[test_case('\0'; "nullterm")]
+    #[test_case('\n'; "newline")]
+    #[test_case('\t'; "tab")]
+    #[test_case('€'; "euro")]
+    #[test_case('不')]
+    #[test_case('ඞ')]
+    #[test_case('🥺'; "emoji")]
+    fn test_unsupported_char_to_report(test_input: char) {
+        assert_eq!(char_to_report(test_input), None);
+    }
 }
