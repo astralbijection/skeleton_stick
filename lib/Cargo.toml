@@ -16,3 +16,7 @@ scrypt = { version = "0.10.0", default-features = false, features = ["std"] }
 serde = { version = "1.0.152", features = ["derive"] }
 serde_json = "1.0.93"
 tokio = { version = "1.25.0", features = ["io-util"] }
+
+[dev-dependencies]
+lazy_static = "1.4.0"
+tokio = { version = "1.25.0", features = ["full"] }

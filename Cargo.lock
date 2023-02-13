@@ -540,6 +540,7 @@ dependencies = [
  "anyhow",
  "flate2",
  "generic-array",
+ "lazy_static",
  "rand_core",
  "scrypt",
  "serde",

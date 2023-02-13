@@ -32,13 +32,15 @@ pub struct FileHeader {
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct PasswordFile {
-    entries: Vec<PasswordEntry>,
+    pub entries: Vec<PasswordEntry>,
 }
 
+#[derive(Debug, Default)]
 pub struct EncryptParams {
     hash_params: scrypt::Params,
 }
 
+#[derive(Debug)]
 pub struct EncryptedPasswordFile {
     ciphertext: Vec<u8>,
     params: EncryptParams,
@@ -59,14 +61,16 @@ impl PasswordFile {
         let mut salt = [0u8; 32];
         OsRng.fill_bytes(&mut salt);
 
+        println!("{:?}", params);
         let mut key: Key<Aes256Gcm> = [0u8; 32].into();
         scrypt(password, &salt, &params.hash_params, &mut key)?;
 
         let mut nonce = [0u8; 12];
+
         OsRng.fill_bytes(&mut nonce);
         let nonce = Nonce::<Aes256Gcm>::from_slice(&nonce);
 
-        let mut cipher = Aes256Gcm::new(&key.into());
+        let mut cipher = Aes256Gcm::new(&key);
         let ciphertext = cipher.encrypt(&nonce, plaintext.as_ref())?;
 
         Ok(EncryptedPasswordFile {
@@ -139,7 +143,63 @@ impl EncryptedPasswordFile {
 
         Ok(EncryptedPasswordFile {
             ciphertext: body,
-            params, nonce, salt
+            params,
+            nonce,
+            salt,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn make_example_file() -> PasswordFile {
+        PasswordFile {
+            entries: vec![
+                PasswordEntry {
+                    name: "uwu".into(),
+                    password: "owo".into(),
+                },
+                PasswordEntry {
+                    name: "foo".into(),
+                    password: "bar".into(),
+                },
+                PasswordEntry {
+                    name: "spam".into(),
+                    password: "nya".into(),
+                },
+            ],
+        }
+    }
+
+    #[test]
+    fn roundtrip_encrypt_decrypt() {
+        let password = b"foobar test password 1";
+        let original = make_example_file();
+        let params = EncryptParams::default();
+
+        let encrypted = original.encrypt(params, password).unwrap();
+        let decrypted = encrypted.decrypt(password).unwrap();
+
+        assert_eq!(decrypted, original);
+    }
+
+    #[tokio::test]
+    async fn roundtrip_encrypt_write_read_decrypt() {
+        let password = b"foobar another password 2";
+        let original = make_example_file();
+        let params = EncryptParams::default();
+
+        let encrypted = original.encrypt(params, password).unwrap();
+
+        let mut file = Vec::<u8>::new();
+        encrypted.write(&mut file).await.unwrap();
+
+        let read_data = EncryptedPasswordFile::read(&mut &file[..]).await.unwrap();
+
+        let decrypted = read_data.decrypt(password).unwrap();
+
+        assert_eq!(decrypted, original);
     }
 }
