@@ -11,7 +11,8 @@
         pkgs = import nixpkgs { inherit system; };
         naersk-lib = pkgs.callPackage naersk { };
       in {
-        defaultPackage = naersk-lib.buildPackage ./.;
+        packages.default = naersk-lib.buildPackage ./.;
+
         devShells.default = with pkgs;
           mkShell {
             buildInputs =
