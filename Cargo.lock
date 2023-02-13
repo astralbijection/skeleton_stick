@@ -517,7 +517,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "skeleton_stick"
+name = "skeleton_stick_cli"
+version = "0.1.0"
+
+[[package]]
+name = "skeleton_stick_device"
 version = "2.0.0"
 dependencies = [
  "anyhow",
@@ -526,10 +530,6 @@ dependencies = [
  "test-case",
  "tokio",
 ]
-
-[[package]]
-name = "skeleton_stick_cli"
-version = "0.1.0"
 
 [[package]]
 name = "skeleton_stick_lib"

@@ -1,5 +1,5 @@
 [package]
-name = "skeleton_stick"
+name = "skeleton_stick_device"
 version = "2.0.0"
 edition = "2021"
 
