@@ -3,12 +3,19 @@ name = "skeleton_stick_device"
 version = "2.0.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+simulator = ["dep:embedded-graphics-simulator"]
 
 [dependencies]
 anyhow = "1.0.69"
+async-trait = "0.1.64"
+clap = { version = "4.1.4", features = ["derive"] }
+embedded-graphics = "0.7.1"
+embedded-graphics-simulator = { version = "0.4.0", optional = true }
+embedded-hal = "0.2.7"
 itertools = "0.10.5"
 lazy_static = "1.4.0"
+ssd1306 = "0.7.1"
 tokio = { version = "1.25.0", features = ["full"] }
 
 [dev-dependencies]

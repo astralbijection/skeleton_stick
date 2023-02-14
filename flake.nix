@@ -14,9 +14,28 @@
         packages.default = naersk-lib.buildPackage ./.;
 
         devShells.default = with pkgs;
-          mkShell {
-            buildInputs =
-              [ cargo rustc rustfmt pre-commit rustPackages.clippy ];
+          mkShell rec {
+            buildInputs = [
+              cargo
+              rustc
+              rustfmt
+              pre-commit
+              rustPackages.clippy
+              SDL2
+              xorg.libX11
+              xorg.libXcursor
+              xorg.libXext
+              xorg.libXrandr
+              xorg.libXfixes
+              xorg.libXi
+              xorg.libXrender
+              xorg.libXau
+              xorg.libXdmcp
+              xorg.libXScrnSaver
+              xorg.libxcb
+            ];
+            LD_LIBRARY_PATH = "${lib.makeLibraryPath buildInputs}";
+            LIBRARY_PATH = "${lib.makeLibraryPath buildInputs}";
             RUST_SRC_PATH = rustPlatform.rustLibSrc;
           };
       });
