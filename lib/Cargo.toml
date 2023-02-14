@@ -13,6 +13,7 @@ flate2 = "1.0.25"
 generic-array = "0.14.6"
 rand_core = { version = "0.6.4", features = ["getrandom", "alloc", "std"] }
 scrypt = { version = "0.10.0", default-features = false, features = ["std"] }
+secstr = { version = "0.5.1", features = ["serde"] }
 serde = { version = "1.0.152", features = ["derive"] }
 serde_json = "1.0.93"
 tokio = { version = "1.25.0", features = ["io-util"] }
