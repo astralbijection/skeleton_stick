@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
 use deadqueue::unlimited;
-use embedded_graphics::prelude::DrawTarget;
+use embedded_graphics::{pixelcolor::BinaryColor, prelude::DrawTarget};
 
 use super::{
     event::{Event, Key},
-    pwscreen,
+    pwscreen::{self, PasswordScreen},
 };
 
 #[derive(Debug)]
@@ -17,7 +17,7 @@ pub struct AppCtx<D: DrawTarget> {
 
 impl<D> AppCtx<D>
 where
-    D: DrawTarget,
+    D: DrawTarget<Color = BinaryColor>,
 {
     pub fn create_with_display(drawable: D) -> Self {
         let raw_events = Arc::new(unlimited::Queue::new());
@@ -30,7 +30,7 @@ where
     }
 
     pub async fn run(&mut self) {
-        pwscreen::run(self).await;
+        PasswordScreen::new(self).run().await;
     }
 
     pub async fn fetch_event(&mut self) -> (Event, bool) {

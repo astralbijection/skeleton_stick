@@ -1,9 +1,16 @@
+use std::iter;
+
+use embedded_graphics::mono_font::ascii::FONT_6X9;
+use embedded_graphics::mono_font::iso_8859_14::FONT_4X6;
+use embedded_graphics::mono_font::MonoTextStyle;
+use embedded_graphics::pixelcolor::BinaryColor;
+use embedded_graphics::prelude::Dimensions;
 use embedded_graphics::prelude::DrawTarget;
-use embedded_graphics::prelude::DrawTargetExt;
-use secstr::{SecStr, SecVec};
-use skeleton_stick_lib::password_file::EncryptedPasswordFile;
+use embedded_graphics::prelude::Point;
+use embedded_graphics::primitives::Rectangle;
+use embedded_graphics::text::Text;
+use embedded_graphics::Drawable;
 use skeleton_stick_lib::password_file::PasswordFile;
-use tokio::select;
 
 use super::{
     app::AppCtx,
@@ -54,22 +61,97 @@ impl From<(Event, bool)> for Action {
     }
 }
 
-pub async fn run(ctx: &mut AppCtx<impl DrawTarget>) -> PasswordFile {
-    let mut password: SecStr = "".into();
-    let mut message: String = "".into();
+pub struct PasswordScreen<'a, D>
+where
+    D: DrawTarget<Color = BinaryColor>,
+{
+    ctx: &'a mut AppCtx<D>,
+    password: Vec<u8>,
+    last_message_box: Rectangle,
+}
 
-    loop {
-        let action: Action = ctx.fetch_event().await.into();
-        match action {
-            Action::AppendChar(c) => {
-                password.resize(password.unsecure().len() + 1, c);
-            }
-            Action::Backspace => {
-                password.resize(password.unsecure().len() - 1, 0);
-            }
-            Action::Clear => password.zero_out(),
-            Action::Submit => break,
-            Action::NoOp => {}
+impl<'a, D> PasswordScreen<'a, D>
+where
+    D: DrawTarget<Color = BinaryColor>,
+{
+    pub fn new(ctx: &'a mut AppCtx<D>) -> Self {
+        Self {
+            ctx,
+            password: Vec::new(),
+            last_message_box: Rectangle::zero(),
         }
+    }
+
+    pub async fn run(mut self) -> PasswordFile
+    where
+        D: DrawTarget<Color = BinaryColor>,
+    {
+        Text::new(
+            "Enter your password",
+            Point::new(5, 5),
+            MonoTextStyle::new(&FONT_6X9, BinaryColor::On),
+        )
+        .draw(&mut self.ctx.drawable);
+
+        loop {
+            self.ask_pw().await;
+
+            self.write_message("Unlocking...");
+
+            if let Some(pwf) = self.unlock().await {
+                return pwf;
+            }
+
+            self.write_message("Wrong password!");
+        }
+    }
+
+    async fn ask_pw(&mut self) {
+        let mut text_bb = Rectangle::zero();
+
+        loop {
+            let stars: String = iter::repeat('*').take(self.password.len()).collect();
+            let star_text = Text::new(
+                &stars,
+                Point::new(5, 30),
+                MonoTextStyle::new(&FONT_4X6, BinaryColor::On),
+            );
+            self.ctx.drawable.fill_solid(&text_bb, BinaryColor::Off);
+            star_text.draw(&mut self.ctx.drawable);
+            text_bb = star_text.bounding_box();
+
+            let action: Action = self.ctx.fetch_event().await.into();
+            eprintln!("{action:?}");
+            match action {
+                Action::AppendChar(c) => {
+                    self.password.push(c);
+                }
+                Action::Backspace => {
+                    self.password.pop();
+                }
+                Action::Clear => {
+                    self.password.clear();
+                }
+                Action::Submit => break,
+                Action::NoOp => {}
+            }
+        }
+    }
+
+    fn write_message(&mut self, message: &str) {
+        self.ctx
+            .drawable
+            .fill_solid(&self.last_message_box, BinaryColor::Off);
+        let text = Text::new(
+            message,
+            Point::new(6, 20),
+            MonoTextStyle::new(&FONT_6X9, BinaryColor::On),
+        );
+        text.draw(&mut self.ctx.drawable);
+        self.last_message_box = text.bounding_box();
+    }
+
+    async fn unlock(&mut self) -> Option<PasswordFile> {
+        None // TODO
     }
 }

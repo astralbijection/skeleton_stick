@@ -23,7 +23,7 @@ use self::multithread_util::MultithreadSimDisplay;
 
 #[tokio::main]
 pub async fn run() {
-    ctrlc::set_handler(move || {
+    ctrlc::set_handler(|| {
         eprintln!("received interrupt, exiting");
         abort();
     })
@@ -48,10 +48,11 @@ pub async fn run() {
 
 fn window_thread(event_queue: Arc<unlimited::Queue<Event>>, display: MultithreadSimDisplay) {
     let keymap: HashMap<Keycode, Key> = HashMap::from([
-        (Keycode::Up, Key::Up),
-        (Keycode::Down, Key::Down),
-        (Keycode::Left, Key::Left),
-        (Keycode::Right, Key::Right),
+        (Keycode::W, Key::Up),
+        (Keycode::X, Key::Down),
+        (Keycode::A, Key::Left),
+        (Keycode::D, Key::Right),
+        (Keycode::S, Key::Center),
         (Keycode::Backspace, Key::Back),
         (Keycode::Return, Key::Enter),
         (Keycode::Space, Key::Shift),
@@ -66,10 +67,11 @@ fn window_thread(event_queue: Arc<unlimited::Queue<Event>>, display: Multithread
     eprintln!("Keymap: {:#?}", &keymap);
 
     loop {
-        {
+        let display = {
             let read = display.arc.read().unwrap();
-            window.update(&read);
-        }
+            read.clone()
+        };
+        window.update(&display);
 
         for simev in window.events() {
             match simev {
